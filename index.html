@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Document Classifier</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <h2>FinanceDoc AI</h2>
+                </div>
+                <div class="nav-links">
+                    <button class="nav-link active" data-view="upload">Upload</button>
+                    <button class="nav-link" data-view="dashboard">Dashboard</button>
+                    <button class="nav-link" data-view="documents">Documents</button>
+                    <div class="health-indicator">
+                        <span class="health-dot"></span>
+                        <span class="health-text">Checking...</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload View -->
+            <section class="view active" id="upload-view">
+                <div class="container">
+                    <div class="upload-header">
+                        <h1>Upload Financial Documents</h1>
+                        <p class="text-secondary">Upload PDFs and images to classify and extract financial data automatically</p>
+                    </div>
+
+                    <div class="upload-section">
+                        <div class="upload-area" id="upload-area">
+                            <div class="upload-content">
+                                <div class="upload-icon">📄</div>
+                                <h3>Drag & drop your files here</h3>
+                                <p>or click to browse files</p>
+                                <div class="supported-formats">
+                                    <small>Supported: PDF, JPG, PNG, TIFF, BMP, WebP, GIF</small>
+                                </div>
+                                <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.bmp,.tiff,.tif,.webp,.gif">
+                            </div>
+                        </div>
+
+                        <div class="selected-files" id="selected-files" style="display: none;">
+                            <h4>Selected Files</h4>
+                            <div class="files-list" id="files-list"></div>
+                            <div class="upload-actions">
+                                <button class="btn btn--primary" id="process-btn" disabled>Process Documents</button>
+                                <button class="btn btn--secondary" id="clear-btn">Clear All</button>
+                            </div>
+                        </div>
+
+                        <div class="processing-status" id="processing-status" style="display: none;">
+                            <div class="card">
+                                <div class="card__body">
+                                    <h4>Processing Documents...</h4>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" id="progress-fill"></div>
+                                    </div>
+                                    <p id="processing-text">Uploading files...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="results-section" id="results-section" style="display: none;">
+                            <div class="card">
+                                <div class="card__body">
+                                    <h4>Processing Complete!</h4>
+                                    <div class="results-summary" id="results-summary"></div>
+                                    <div class="results-list" id="results-list"></div>
+                                    <button class="btn btn--primary" onclick="showView('documents')">View All Documents</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard View -->
+            <section class="view" id="dashboard-view">
+                <div class="container">
+                    <div class="dashboard-header">
+                        <h1>Dashboard</h1>
+                        <p class="text-secondary">Overview of your financial documents and processing statistics</p>
+                    </div>
+
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--color-bg-1);">📊</div>
+                            <div class="stat-content">
+                                <h3 id="total-docs">-</h3>
+                                <p>Total Documents</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--color-bg-2);">📈</div>
+                            <div class="stat-content">
+                                <h3 id="processed-today">-</h3>
+                                <p>Processed Today</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--color-bg-3);">💰</div>
+                            <div class="stat-content">
+                                <h3 id="total-amount">-</h3>
+                                <p>Total Amount Processed</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background: var(--color-bg-4);">📋</div>
+                            <div class="stat-content">
+                                <h3 id="categories-count">6</h3>
+                                <p>Document Categories</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-content">
+                        <div class="recent-documents">
+                            <div class="card">
+                                <div class="card__header">
+                                    <h3>Recent Documents</h3>
+                                    <button class="btn btn--sm btn--outline" onclick="showView('documents')">View All</button>
+                                </div>
+                                <div class="card__body">
+                                    <div class="recent-docs-list" id="recent-docs-list">
+                                        <div class="loading-state">Loading recent documents...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="category-distribution">
+                            <div class="card">
+                                <div class="card__header">
+                                    <h3>Document Categories</h3>
+                                </div>
+                                <div class="card__body">
+                                    <div class="category-list" id="category-list">
+                                        <div class="loading-state">Loading categories...</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Documents View -->
+            <section class="view" id="documents-view">
+                <div class="container">
+                    <div class="documents-header">
+                        <h1>Document Library</h1>
+                        <div class="documents-controls">
+                            <div class="search-box">
+                                <input type="text" id="search-input" class="form-control" placeholder="Search documents...">
+                            </div>
+                            <select id="category-filter" class="form-control">
+                                <option value="">All Categories</option>
+                                <option value="Core Financial Statements">Core Financial Statements</option>
+                                <option value="Source Documents">Source Documents</option>
+                                <option value="Journals & Ledgers">Journals & Ledgers</option>
+                                <option value="Supporting Schedules">Supporting Schedules</option>
+                                <option value="Management Reports">Management Reports</option>
+                                <option value="Statutory/Compliance">Statutory/Compliance</option>
+                            </select>
+                            <select id="type-filter" class="form-control">
+                                <option value="">All Types</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="documents-content">
+                        <div class="documents-list" id="documents-list">
+                            <div class="loading-state">Loading documents...</div>
+                        </div>
+                        
+                        <div class="pagination" id="pagination" style="display: none;">
+                            <button class="btn btn--sm btn--outline" id="prev-btn" disabled>Previous</button>
+                            <span class="pagination-info" id="pagination-info">Page 1</span>
+                            <button class="btn btn--sm btn--outline" id="next-btn">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Document Detail Modal -->
+            <div class="modal hidden" id="document-modal">
+                <div class="modal-overlay" onclick="closeDocumentModal()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 id="modal-title">Document Details</h2>
+                        <button class="modal-close" onclick="closeDocumentModal()">&times;</button>
+                    </div>
+                    <div class="modal-body" id="modal-body">
+                        <div class="loading-state">Loading document details...</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toast-container"></div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

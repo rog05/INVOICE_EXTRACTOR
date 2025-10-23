@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+pdfplumber
+langchain-google-genai
+langchain-core
+python-multipart
+pytesseract
+Pillow
+supabase
+postgrest
