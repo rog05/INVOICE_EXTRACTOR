@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FinanceDoc AI</title>
+<style>
+:root {
+  --primary: #25D366; --primary-dark: #1da851; --bg-secondary: #fff;
+  --bg-primary: #f0f2f5; --bg-tertiary: #e9edef;
+  --text-primary: #111b21; --text-secondary: #667781;
+  --radius: 12px; --space-4: 16px; --space-6: 24px;
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;
+  background:var(--bg-primary);color:var(--text-primary);line-height:1.5;}
+.app{min-height:100vh;display:flex;flex-direction:column;}
+.navbar{background:var(--bg-secondary);padding:0 var(--space-6);
+  box-shadow:0 1px 2px rgba(0,0,0,0.1);position:sticky;top:0;z-index:100;}
+.nav-container{max-width:1200px;margin:0 auto;display:flex;
+  align-items:center;justify-content:space-between;height:64px;}
+.nav-brand h2{background:linear-gradient(135deg,#667eea,#764ba2);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  font-size:20px;font-weight:600;}
+.nav-links{display:flex;align-items:center;gap:8px;}
+.nav-link{background:none;border:none;padding:8px 16px;border-radius:9999px;
+  cursor:pointer;color:var(--text-secondary);font-weight:500;transition:.2s;}
+.nav-link.active{background:var(--primary);color:#fff;box-shadow:var(--shadow-md);}
+.nav-link:hover{background:rgba(37,211,102,0.1);color:var(--text-primary);}
+.health-indicator{display:flex;align-items:center;gap:4px;padding:4px 8px;
+  background:var(--bg-tertiary);border-radius:9999px;font-size:12px;}
+.health-dot{width:8px;height:8px;border-radius:50%;background:var(--text-secondary);}
+.health-dot.healthy{background:var(--primary);}
+.loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(255,255,255,0.9);display:none;align-items:center;
+  justify-content:center;z-index:1000;}
+.loading-spinner{width:40px;height:40px;border:4px solid var(--bg-tertiary);
+  border-top:4px solid var(--primary);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+.main-content{flex:1;padding:24px 0;}
+.view{display:none;} .view.active{display:block;}
+.container{max-width:1200px;margin:0 auto;padding:0 var(--space-6);}
+.upload-header{text-align:center;margin-bottom:48px;}
+.upload-section{max-width:800px;margin:0 auto;}
+.upload-area{border:2px dashed var(--bg-tertiary);border-radius:var(--radius);
+  padding:48px;text-align:center;cursor:pointer;background:var(--bg-secondary);
+  transition:transform .2s;border-color:var(--bg-tertiary);}
+.upload-area:hover{transform:scale(1.02);border-color:var(--primary);}
+.upload-area.dragover{background:var(--primary-dark);border-color:var(--primary);}
+.upload-icon{font-size:48px;opacity:.7;margin-bottom:16px;}
+.selected-files, .processing-status, .results-section{margin-top:32px;
+  background:var(--bg-secondary);padding:24px;border-radius:var(--radius);
+  box-shadow:var(--shadow-md);}
+.files-list{display:grid;gap:8px;margin-bottom:16px;}
+.file-item{display:flex;align-items:center;justify-content:space-between;
+  padding:16px;background:var(--bg-tertiary);border-radius:var(--radius);
+  border:1px solid var(--bg-secondary);transition:transform .2s;}
+.file-item:hover{transform:translateX(4px);}
+.file-info{display:flex;align-items:center;gap:16px;}
+.file-remove{background:none;border:none;color:#f02849;font-size:18px;
+  cursor:pointer;transition:transform .2s;border-radius:50%;padding:4px;}
+.file-remove:hover{transform:scale(1.2);background:rgba(240,40,73,0.1);}
+.btn{padding:8px 16px;border:none;border-radius:var(--radius);cursor:pointer;
+  font-weight:600;transition:transform .2s;}
+.btn-primary{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-secondary{background:var(--bg-secondary);color:var(--text-primary);
+  border:1px solid var(--bg-tertiary);}
+.btn-secondary:hover{transform:translateY(-1px);}
+.progress-bar{width:100%;height:8px;background:var(--bg-tertiary);
+  border-radius:9999px;overflow:hidden;margin:16px 0;}
+.progress-fill{height:100%;background:var(--primary);width:0;transition:width .3s;}
+.results-summary, .stats-grid, .recent-documents, .category-chart{
+  display:grid;gap:16px;margin-bottom:32px;}
+.stats-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr));}
+.stat-card, .summary-card, .recent-section.card, .category-section.card{
+  background:var(--bg-secondary);border-radius:var(--radius);
+  box-shadow:var(--shadow-md);border:1px solid var(--bg-tertiary);
+  overflow:hidden;transition:transform .2s;}
+.stat-card:hover, .summary-card:hover, .recent-section.card:hover,
+.category-section.card:hover{transform:translateY(-4px);}
+.stat-card::before, .summary-card::before{content:'';position:absolute;top:0;
+  left:0;right:0;height:4px;background:linear-gradient(135deg,#667eea,#764ba2);}
+.stat-icon{font-size:32px;padding:16px;border-radius:50%;background:var(--bg-tertiary);}
+.stat-value, .summary-value{font-size:28px;font-weight:600;
+  background:linear-gradient(135deg,#667eea,#764ba2);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.stat-label, .summary-label{font-size:12px;color:var(--text-secondary);
+  text-transform:uppercase;}
+.result-item, .document-card{padding:24px;background:var(--bg-tertiary);
+  border-radius:var(--radius);border:1px solid var(--bg-secondary);
+  transition:transform .2s;margin-bottom:16px;}
+.result-item:hover, .document-card:hover{transform:translateY(-2px);}
+.result-header, .document-info{display:flex;justify-content:space-between;}
+.result-title, .document-info h4{font-weight:600;font-size:16px;}
+.result-category{background:var(--primary);color:#fff;padding:4px 12px;
+  border-radius:9999px;font-size:11px;text-transform:uppercase;}
+.result-field{display:flex;flex-direction:column;}
+.result-field-label{font-size:11px;color:var(--text-secondary);
+  text-transform:uppercase;margin-bottom:4px;}
+.result-field-value{font-size:14px;color:var(--text-primary);font-weight:500;}
+.documents-list{border:1px solid var(--bg-tertiary);border-radius:var(--radius);}
+.documents-list .document-card{border:none;border-bottom:1px solid var(--bg-tertiary);}
+.documents-list .document-card:last-child{border-bottom:none;border-radius:0 0 var(--radius) var(--radius);}
+.filters-section{background:var(--bg-secondary);padding:24px;border-radius:var(--radius);
+  box-shadow:var(--shadow-md);display:flex;gap:24px;flex-wrap:wrap;border:1px solid var(--bg-tertiary);}
+.search-input, .filter-select{padding:12px 16px;border:1px solid var(--bg-tertiary);
+  border-radius:var(--radius);background:var(--bg-tertiary);color:var(--text-primary);}
+.search-input:focus, .filter-select:focus{outline:none;border-color:var(--primary);}
+.pagination{display:flex;justify-content:center;gap:24px;margin:32px 0;}
+.pagination-info{color:var(--text-secondary);font-weight:500;}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);
+  display:none;align-items:center;justify-content:center;z-index:1000;}
+.modal.active{display:flex;}
+.modal-content{background:var(--bg-secondary);border-radius:var(--radius-lg);
+  max-width:900px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 10px 15px rgba(0,0,0,0.2);}
+.modal-header{display:flex;justify-content:space-between;align-items:center;
+  padding:24px;border-bottom:1px solid var(--bg-tertiary);background:var(--bg-tertiary);}
+.modal-close{background:none;border:none;font-size:24px;color:var(--text-secondary);
+  cursor:pointer;padding:8px;border-radius:50%;transition:transform .2s;}
+.modal-close:hover{transform:scale(1.2);}
+.modal-body{padding:24px;}
+.detail-section{margin-bottom:32px;}
+.detail-section h3{margin-bottom:24px;color:var(--primary);font-weight:600;}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;}
+.detail-item{display:flex;flex-direction:column;}
+.detail-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;margin-bottom:4px;}
+.detail-value{font-size:14px;color:var(--text-primary);font-weight:500;}
+.line-items-table{width:100%;border-collapse:collapse;margin-top:16px;}
+.line-items-table th, .line-items-table td{padding:12px;border-bottom:1px solid var(--bg-tertiary);}
+.line-items-table th{background:var(--bg-tertiary);font-size:12px;color:var(--text-secondary);text-transform:uppercase;}
+.empty-state{text-align:center;padding:64px 0;color:var(--text-secondary);}
+.empty-state h3{margin-bottom:24px;color:var(--text-primary);}
+.toast-container{position:fixed;top:24px;right:24px;z-index:1100;}
+.toast{background:var(--bg-secondary);padding:16px;border-radius:var(--radius);
+  box-shadow:0 4px 6px rgba(0,0,0,0.1);border-left:4px solid var(--primary);margin-bottom:16px;}
+.toast.error{border-left-color:var(--error);}
+.toast.warning{border-left-color:var(--warning);}
+.toast-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.toast-title{font-weight:600;color:var(--text-primary);font-size:14px;}
+.toast-close{background:none;border:none;font-size:16px;color:var(--text-secondary);cursor:pointer;}
+.toast-message{font-size:13px;color:var(--text-secondary);}
+</style>
+<div class="app">
+  <nav class="navbar"><div class="nav-container">
+    <div class="nav-brand"><h2>📊 FinanceDoc AI</h2></div>
+    <div class="nav-links">
+      <button class="nav-link active" data-view="upload">📤 Upload</button>
+      <button class="nav-link" data-view="dashboard">📈 Dashboard</button>
+      <button class="nav-link" data-view="documents">📋 Documents</button>
+      <div class="health-indicator">
+        <span class="health-dot"></span>
+        <span class="health-text">Checking...</span>
+      </div>
+    </div>
+  </div></nav>
+  <main class="main-content">
+    <section class="view active" id="upload-view">
+      <div class="container">
+        <div class="upload-header">
+          <h1>📄 Upload Financial Documents</h1>
+          <p class="text-secondary">Upload PDFs & images to classify and extract data</p>
+        </div>
+        <div class="upload-section">
+          <div class="upload-area" id="upload-area">
+            <div class="upload-content">
+              <div class="upload-icon">📄</div>
+              <h3>Drag & drop files here</h3>
+              <p>or click to select</p>
+              <div class="supported-formats"><small>PDF, JPG, PNG, TIFF, BMP, WEBP, GIF</small></div>
+            </div>
+            <input type="file" id="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.bmp,.tiff,.tif,.webp,.gif" hidden>
+          </div>
+          <div class="selected-files" id="selected-files" style="display:none;">
+            <h3>📋 Selected Files</h3>
+            <div class="files-list" id="files-list"></div>
+            <div class="file-actions">
+              <button class="btn btn-secondary" id="clear-btn">🗑️ Clear All</button>
+              <button class="btn btn-primary" id="process-btn">⚡ Process</button>
+            </div>
+          </div>
+          <div class="processing-status" id="processing-status" style="display:none;">
+            <h3>⚙️ Processing Documents</h3>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+            <p id="processing-text">Uploading files...</p>
+          </div>
+          <div class="results-section" id="results-section" style="display:none;">
+            <h3>✅ Results</h3>
+            <div class="results-summary" id="results-summary"></div>
+            <div class="results-list" id="results-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="view" id="dashboard-view">
+      <div class="container">
+        <div class="dashboard-header">
+          <h1>📈 Dashboard</h1><p class="text-secondary">Overview of your documents</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon">📊</div>
+            <div class="stat-content"><div class="stat-value" id="total-documents">0</div><div class="stat-label">Total Documents</div></div>
+          </div>
+          <div class="stat-card"><div class="stat-icon">✅</div>
+            <div class="stat-content"><div class="stat-value" id="processed-today">0</div><div class="stat-label">Processed Today</div></div>
+          </div>
+          <div class="stat-card"><div class="stat-icon">📋</div>
+            <div class="stat-content"><div class="stat-value" id="categories-count">6</div><div class="stat-label">Categories</div></div>
+          </div>
+          <div class="stat-card"><div class="stat-icon">💰</div>
+            <div class="stat-content"><div class="stat-value" id="total-amount">₹0</div><div class="stat-label">Total Amount (INR)</div></div>
+          </div>
+        </div>
+        <div class="recent-section card"><h2>📑 Recent Documents</h2><div class="recent-documents" id="recent-documents"></div></div>
+        <div class="category-section card"><h2>📊 Category Breakdown</h2><div class="category-chart" id="category-chart"></div></div>
+      </div>
+    </section>
+    <section class="view" id="documents-view">
+      <div class="container">
+        <div class="documents-header"><h1>📋 Document Library</h1><p class="text-secondary">Search & filter documents</p></div>
+        <div class="filters-section">
+          <input type="text" id="search-input" placeholder="🔍 Search" class="search-input">
+          <select id="category-filter" class="filter-select"><option value="">All Categories</option></select>
+          <select id="type-filter" class="filter-select"><option value="">All Types</option></select>
+          <button class="btn btn-secondary" id="clear-filters">🧹 Clear</button>
+        </div>
+        <div class="documents-list" id="documents-list"></div>
+        <div class="pagination" id="pagination">
+          <button class="btn btn-secondary" id="prev-btn">← Prev</button>
+          <span class="pagination-info" id="pagination-info">Page 1 of 1</span>
+          <button class="btn btn-secondary" id="next-btn">Next →</button>
+        </div>
+      </div>
+    </section>
+  </main>
+  <div class="modal" id="document-modal"><div class="modal-content">
+    <div class="modal-header"><h2 id="modal-title">Details</h2><button class="modal-close" id="modal-close">×</button></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div></div>
+  <div class="toast-container" id="toast-container"></div>
+  <div class="loading-overlay" id="loading-overlay"><div class="loading-spinner"></div><p>Processing...</p></div>
+</div>
+<script>
+const API_BASE_URL='http://127.0.0.1:8000',SUPPORTED_FORMATS={pdfs:['.pdf'],images:['.jpg','.jpeg','.png','.bmp','.tiff','.tif','.webp','.gif']},CATEGORIES=['Core Financial Statements','Source Documents','Journals & Ledgers','Supporting Schedules','Management Reports','Statutory/Compliance'];let currentView='upload',selectedFiles=[],currentPage=1,itemsPerPage=10,documentsCache=[],isProcessing=false,totalDocuments=0;let uploadArea,fileInput,selectedFilesSection,filesList,processBtn,clearBtn,processingStatus,progressFill,processingText,resultsSection,documentsList,searchInput,categoryFilter,typeFilter,pagination,prevBtn,nextBtn,paginationInfo,documentModal,modalTitle,modalBody,modalClose,healthDot,healthText,toastContainer,loadingOverlay;document.addEventListener('DOMContentLoaded',()=>{initDOM();setupListeners();checkHealth();showView('upload');loadDocuments()});function initDOM(){uploadArea=document.getElementById('upload-area');fileInput=document.getElementById('file-input');selectedFilesSection=document.getElementById('selected-files');filesList=document.getElementById('files-list');processBtn=document.getElementById('process-btn');clearBtn=document.getElementById('clear-btn');processingStatus=document.getElementById('processing-status');progressFill=document.getElementById('progress-fill');processingText=document.getElementById('processing-text');resultsSection=document.getElementById('results-section');documentsList=document.getElementById('documents-list');searchInput=document.getElementById('search-input');categoryFilter=document.getElementById('category-filter');typeFilter=document.getElementById('type-filter');pagination=document.getElementById('pagination');prevBtn=document.getElementById('prev-btn');nextBtn=document.getElementById('next-btn');paginationInfo=document.getElementById('pagination-info');documentModal=document.getElementById('document-modal');modalTitle=document.getElementById('modal-title');modalBody=document.getElementById('modal-body');modalClose=document.getElementById('modal-close');healthDot=document.querySelector('.health-dot');healthText=document.querySelector('.health-text');toastContainer=document.getElementById('toast-container');loadingOverlay=document.getElementById('loading-overlay');CATEGORIES.forEach(c=>{let o=document.createElement('option');o.value=c;o.textContent=c;categoryFilter.appendChild(o)});}function setupListeners(){document.querySelectorAll('.nav-link').forEach(l=>l.onclick=e=>showView(e.target.dataset.view));uploadArea.onclick=()=>fileInput.click();uploadArea.ondragover=e=>{e.preventDefault();uploadArea.classList.add('dragover')};uploadArea.ondragleave=e=>{e.preventDefault();uploadArea.classList.remove('dragover')};uploadArea.ondrop=e=>{e.preventDefault();uploadArea.classList.remove('dragover');addFiles(Array.from(e.dataTransfer.files))};fileInput.onchange=e=>addFiles(Array.from(e.target.files));processBtn.onclick=processDocs;clearBtn.onclick=clearFiles;searchInput.oninput=debounce(filterDocs,300);categoryFilter.onchange=filterDocs;typeFilter.onchange=filterDocs;document.getElementById('clear-filters').onclick=clearFilters;prevBtn.onclick=()=>changePage(currentPage-1);nextBtn.onclick=()=>changePage(currentPage+1);modalClose.onclick=closeModal;documentModal.onclick=e=>e.target===documentModal&&closeModal();document.addEventListener('keydown',e=>e.key==='Escape'&&closeModal());}function showView(v){document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active',l.dataset.view===v));document.querySelectorAll('.view').forEach(vw=>vw.classList.remove('active'));document.getElementById(v+'-view').classList.add('active');currentView=v;v==='dashboard'?loadDashboard():v==='documents'&&loadDocuments()}async function processDocs(){if(!selectedFiles.length)return showToast('Select files','error');if(isProcessing)return;isProcessing=true;showProcessing();let fd=new FormData();selectedFiles.forEach(f=>fd.append('files',f));try{updateProcessing(20,'Uploading...');let r=await fetch(`${API_BASE_URL}/classify-documents/`,{method:'POST',body:fd});if(!r.ok)throw new Error(r.status);updateProcessing(60,'Processing...');let res=await r.json();updateProcessing(80,'Extracting...');await new Promise(r=>setTimeout(r,500));updateProcessing(100,'Complete');setTimeout(()=>{hideProcessing();showResults(res);isProcessing=false;currentView!=='upload'&&loadDocuments()},500)}catch(e){console.error(e);hideProcessing();isProcessing=false;showToast('Error: '+e.message,'error')} }function showProcessing(){processingStatus.style.display='block';hideResults()}function updateProcessing(p,t){progressFill.style.width=p+'%';processingText.textContent=t}function hideProcessing(){processingStatus.style.display='none'}function showResults(r){if(!r||!r.documents)return showToast('No docs','warning');resultsSection.style.display='block';let sum=`
+  <div class="summary-card"><div class="summary-value">${r.processed_files}</div><div class="summary-label">Files</div></div>
+  <div class="summary-card"><div class="summary-value">${r.classified_documents}</div><div class="summary-label">Classified</div></div>
+  <div class="summary-card"><div class="summary-value">${r.saved_to_database}</div><div class="summary-label">Saved</div></div>`;document.getElementById('results-summary').innerHTML=sum;let rl=document.getElementById('results-list');rl.innerHTML='';r.documents.forEach(d=>{let itm=document.createElement('div');itm.className='result-item';itm.innerHTML=`<div class="result-header"><div class="result-title">${d.documentType||'Unknown'}</div><div class="result-category">${d.category||'Uncat'}</div></div><div class="result-details">${d.documentId?`<div class="result-field"><div class="result-field-label">ID</div><div class="result-field-value">${d.documentId}</div></div>`:''}${d.date?`<div class="result-field"><div class="result-field-label">Date</div><div class="result-field-value">${formatDate(d.date)}</div></div>`:''}${(d.amount?.gross||d.amount?.total)?`<div class="result-field"><div class="result-field-label">Amount</div><div class="result-field-value">${formatCurrency(d.amount.gross||d.amount.total,d.amount.currency)}</div></div>`:''}${d.status?`<div class="result-field"><div class="result-field-label">Status</div><div class="result-field-value">${d.status}</div></div>`:''}</div>`;rl.appendChild(itm)});showToast(`Processed ${r.classified_documents}`,'success')}function hideResults(){resultsSection.style.display='none'}async function loadDocuments(){showLoading();try{let r=await fetch(`${API_BASE_URL}/documents/?limit=${itemsPerPage}&offset=${(currentPage-1)*itemsPerPage}`);if(!r.ok)throw 0;let j=await r.json();documentsCache=j.documents||[];totalDocuments=j.count||0;displayDocs(documentsCache);updatePagination()}catch(e){console.error(e);showToast('Error loading docs','error');displayDocs([]);updatePagination()}hideLoading()}function displayDocs(docs){let dl=document.getElementById('documents-list');dl.innerHTML='';if(!docs.length)return dl.innerHTML=`<div class="empty-state"><h3>📄 No documents</h3><p>Upload some to begin</p><button class="btn btn-primary" onclick="showView('upload')">Upload</button></div>`;docs.forEach(d=>{let c=document.createElement('div');c.className='document-card';c.innerHTML=`<div class="document-info"><h4>${d.document_type||d.documentType||'Unknown'}</h4><p>${d.categories?.name||d.category||'Uncat'} • ${formatDate(d.date||d.created_at)}</p></div><div class="document-meta"><p>${d.document_id||'No ID'}</p><p>${formatCurrency(d.total_amount,d.primary_currency)||'No amt'}</p></div>`;c.onclick=()=>showDetails(d.id);dl.appendChild(c)})}async function loadDashboard(){showLoading();try{let r=await fetch(`${API_BASE_URL}/documents/?limit=5`);if(r.ok){let j=await r.json();displayRecent(j.documents||[]);updateStats(j.documents||[])}else{displayRecent([]);updateStats([])}let allr=await fetch(`${API_BASE_URL}/documents/?limit=1000`);if(allr.ok){let allj=await allr.json();updateCategory(allj.documents||[])} }catch(e){console.error(e);showToast('Error dashboard','error');displayRecent([]);updateStats([]);updateCategory([])}hideLoading()}function displayRecent(docs){let rc=document.getElementById('recent-documents');rc.innerHTML='';if(!docs.length)return rc.innerHTML=`<div class="empty-state"><h4>📋 No docs</h4><p>Upload one</p></div>`;docs.slice(0,5).forEach(d=>{let c=document.createElement('div');c.className='document-card';c.innerHTML=`<div class="document-info"><h4>${d.document_type||d.documentType||'Unknown'}</h4><p>${d.categories?.name||d.category}</p></div><div class="document-meta"><p>${formatDate(d.date||d.created_at)}</p></div>`;c.onclick=()=>showDetails(d.id);rc.appendChild(c)})}function updateStats(docs){document.getElementById('total-documents').textContent=docs.length;let td=new Date().toISOString().split('T')[0],pt=docs.filter(d=>(d.created_at||d.date||'').startsWith(td)).length;document.getElementById('processed-today').textContent=pt;let sum=docs.reduce((s,d)=>s+(parseFloat(d.total_amount)||0),0);document.getElementById('total-amount').textContent=formatCurrency(sum,'INR');updateCategory(docs)}function updateCategory(docs){let cc={};docs.forEach(d=>{let k=d.categories?.name||d.category||'Uncat';cc[k]=(cc[k]||0)+1});let cat=document.getElementById('category-chart');cat.innerHTML='';if(!docs.length)return cat.innerHTML=`<div class="empty-state"><p>No data</p></div>`;Object.entries(cc).forEach(([k,v])=>{let i=document.createElement('div');i.className='category-item';i.innerHTML=`<span class="category-name">${k}</span><span class="category-count">${v}</span>`;cat.appendChild(i)})}async function showDetails(id){showLoading();try{let r=await fetch(`${API_BASE_URL}/documents/${id}`);if(!r.ok)throw r;let j=await r.json();openModal(j)}catch(e){console.error(e);showToast('Error loading detail','error')}hideLoading()}function openModal(data){modalTitle.textContent=data.document.document_type||data.documentType;let doc=data.document||data;let html=`<div class="detail-section"><h3>📋 Info</h3><div class="detail-grid"><div class="detail-item"><div class="detail-label">Category</div><div class="detail-value">${doc.categories?.name||doc.category}</div></div><div class="detail-item"><div class="detail-label">Type</div><div class="detail-value">${doc.document_type||doc.documentType}</div></div><div class="detail-item"><div class="detail-label">ID</div><div class="detail-value">${doc.document_id||doc.documentId}</div></div><div class="detail-item"><div class="detail-label">Date</div><div class="detail-value">${formatDate(doc.date)}</div></div><div class="detail-item"><div class="detail-label">Amount</div><div class="detail-value">${formatCurrency(doc.total_amount,doc.primary_currency)}</div></div><div class="detail-item"><div class="detail-label">Status</div><div class="detail-value">${doc.status}</div></div></div></div>`;if(data.line_items?.length){html+=`<div class="detail-section"><h3>📊 Line Items</h3><table class="line-items-table"><thead><tr><th>Description</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>${data.line_items.map(i=>`<tr><td>${i.description}</td><td>${i.quantity||''}</td><td>${formatCurrency(i.unit_price,doc.primary_currency)}</td><td>${formatCurrency(i.total_amount,doc.primary_currency)}</td></tr>`).join('')}</tbody></table></div>`;}if(data.parties_involved?.length){html+=`<div class="detail-section"><h3>👥 Parties</h3><div class="detail-grid">${data.parties_involved.map(p=>`<div class="detail-item"><div class="detail-label">${p.role}</div><div class="detail-value">${p.name}${p.address?`<br><small>${p.address}</small>`:''}</div></div>`).join('')}</div></div>`;}modalBody.innerHTML=html;documentModal.classList.add('active')}function closeModal(){documentModal.classList.remove('active')}function filterDocs(){let s=searchInput.value.toLowerCase(),cf=categoryFilter.value,tf=typeFilter.value;displayDocs(documentsCache.filter(d=>(!s||d.document_type.toLowerCase().includes(s)||d.document_id.toLowerCase().includes(s))&&(!cf||(d.categories?.name||d.category)===cf)&&(!tf||(d.document_type||d.documentType)===tf)))}function clearFilters(){searchInput.value='';categoryFilter.value='';typeFilter.value='';displayDocs(documentsCache)}function changePage(n){let tp=Math.ceil(totalDocuments/itemsPerPage)||1; if(n>=1&&n<=tp){currentPage=n;loadDocuments();}}function updatePagination(){let tp=Math.ceil(totalDocuments/itemsPerPage)||1;prevBtn.disabled=currentPage<=1;nextBtn.disabled=currentPage>=tp;paginationInfo.textContent=`Page ${currentPage} of ${tp}`}async function checkHealth(){try{let r=await fetch(`${API_BASE_URL}/health`),h=await r.json();healthDot.className='health-dot '+(h.status==='healthy'?'healthy':'');healthText.textContent=h.status==='healthy'?'System Online':'System Offline'}catch{healthDot.className='health-dot';healthText.textContent='System Offline'}}function showToast(m,t='success'){let c=document.createElement('div');c.className=`toast ${t}`;c.innerHTML=`<div class="toast-header"><span class="toast-title">${t[0].toUpperCase()+t.slice(1)}</span><button class="toast-close">×</button></div><div class="toast-message">${m}</div>`;toastContainer.appendChild(c);setTimeout(()=>c.remove(),5000);c.querySelector('.toast-close').onclick=()=>c.remove()}function showLoading(){loadingOverlay.style.display='flex'}function hideLoading(){loadingOverlay.style.display='none'}function formatDate(d){return d?new Date(d).toLocaleDateString('en-IN',{year:'numeric',month:'short',day:'numeric'}):''}function formatCurrency(a,c){return typeof a!=='number'&&!a? '': new Intl.NumberFormat('en-IN',{style:'currency',currency:c||'INR'}).format(a)}function getFileIcon(n){let e=n.split('.').pop().toLowerCase();if(e==='pdf')return '📄';if(['jpg','jpeg','png','gif','webp','bmp','tiff','tif'].includes(e))return '🖼️';return '📎'}function debounce(f,w){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f(...a),w)}}window.removeFile=idx=>{selectedFiles.splice(idx,1);updateSelectedFilesDisplay()};window.showView=v=>{document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active',l.dataset.view===v));document.querySelectorAll('.view').forEach(vw=>vw.classList.remove('active'));document.getElementById(v+'-view').classList.add('active');if(v==='dashboard')loadDashboard();else if(v==='documents')loadDocuments()};function updateSelectedFilesDisplay(){if(!selectedFiles.length){selectedFilesSection.style.display='none';return;}selectedFilesSection.style.display='block';filesList.innerHTML='';selectedFiles.forEach((f,i)=>{let itm=document.createElement('div');itm.className='file-item';itm.innerHTML=`<div class="file-info"><span class="file-icon">${getFileIcon(f.name)}</span><div class="file-details"><h4>${f.name}</h4><p>${(f.size/1024/1024).toFixed(2)} MB • ${f.type}</p></div></div><button class="file-remove" onclick="removeFile(${i})">×</button>`;filesList.appendChild(itm)})}
+</script>
+</body>
+</html>
